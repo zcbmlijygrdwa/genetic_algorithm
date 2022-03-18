@@ -11,6 +11,13 @@ for i = 1:size(files,1)
     
     tokens = strsplit(file, ".");
     file_name = tokens{1}
+    
+    % if jpg already exists, skip this one
+    if(exist(["images/" file_name ".jpg"])>0)
+      continue;
+    end
+    
+    
     data = csvread(file);
     img = zeros(data(end,1)+1, data(end,2)+1,3);
 
