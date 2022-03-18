@@ -221,7 +221,7 @@ Board getTargetBoard(int rows, int cols)
 
 struct Entity
 {
-    int num_box = 3;
+    int num_box = 4;
     std::vector<Box> box_vec;
     Entity()
     {
@@ -315,8 +315,8 @@ int main(int ac, char** av)
     board_target.saveBoard("example.bd");
 
 
-    int num_survival = 3;
-    int num_children_each_survival = 30;
+    int num_survival = 5;
+    int num_children_each_survival = 100;
 
     std::vector<Box> box_vec;
     std::vector<Entity> entity_vec;
@@ -346,7 +346,7 @@ int main(int ac, char** av)
             // big mutation
             for(int j = 0 ; j < num_children_each_survival ; j++)
             {
-                Entity child = entity_vec[i].mutate(10);
+                Entity child = entity_vec[i].mutate(20);
                 child_vec.push_back(child);
             }
         }
@@ -371,7 +371,7 @@ int main(int ac, char** av)
             Entity entity = score_entity_vec[i].second;
             entity_vec.push_back(entity);
 
-            if(iter%1000==0)
+            if(iter%100==0)
             {
                 std::string file_name = "board_"+std::to_string(iter)+"_"+std::to_string(i)+".bd";
                 entity.saveBoard(file_name);
