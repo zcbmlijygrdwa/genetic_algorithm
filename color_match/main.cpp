@@ -14,11 +14,35 @@ struct RGB
     double g = 1; //0 - 1
     double b = 1; //0 - 1
 
+    RGB()
+    {
+    }
+
+    RGB(double ir, double ig, double ib)
+    {
+        r = ir;
+        g = ig;
+        b = ib;
+    }
+
+
+
     double operator - (const RGB& rgb) const
     {
+        //std::cout<<"r = "<<r<<std::endl;
+        //std::cout<<"g = "<<g<<std::endl;
+        //std::cout<<"b = "<<b<<std::endl;
+        //std::cout<<"rgb.r = "<<rgb.r<<std::endl;
+        //std::cout<<"rgb.g = "<<rgb.g<<std::endl;
+        //std::cout<<"rgb.b = "<<rgb.b<<std::endl;
         return std::fabs(rgb.r - r)
             + std::fabs(rgb.g - g)
             + std::fabs(rgb.b - b);
+    }
+
+    void print() const
+    {
+        std::cout<<" rgb = ["<<r<<","<<g<<","<<b<<"]"<<std::endl;
     }
 };
 
@@ -78,21 +102,21 @@ struct Box
 
         //std::cout<<"box.left_up_x = "<<box.left_up_x<<std::endl;
         int pos_delta = getPositionDelta(scale);
-        while(box.left_up_x+pos_delta >= board_rows-1 || box.left_up_x+pos_delta <0)
+        while(box.left_up_x+pos_delta >= board_cols-1 || box.left_up_x+pos_delta <0)
             pos_delta = getPositionDelta(scale);
         box.left_up_x += pos_delta;
 
         //std::cout<<"box.left_up_y = "<<box.left_up_y<<std::endl;
 
         pos_delta = getPositionDelta(scale);
-        while(box.left_up_y+pos_delta >= board_cols-1 || box.left_up_y+pos_delta <0)
+        while(box.left_up_y+pos_delta >= board_rows -1 || box.left_up_y+pos_delta <0)
             pos_delta = getPositionDelta(scale);
         box.left_up_y += pos_delta;
 
 
         //std::cout<<"box.right_down_x = "<<box.right_down_x<<std::endl;
         pos_delta = getPositionDelta(scale);
-        while(box.right_down_x+pos_delta>= board_rows || box.right_down_x+pos_delta <= box.left_up_x)
+        while(box.right_down_x+pos_delta>= board_cols|| box.right_down_x+pos_delta <= box.left_up_x)
         {
             pos_delta = getPositionDelta(scale);
             //std::cout<<"-----"<<std::endl;
@@ -107,7 +131,7 @@ struct Box
         //std::cout<<"box.right_down_y = "<<box.right_down_y<<std::endl;
 
         pos_delta = getPositionDelta(scale);
-        while(box.right_down_y + pos_delta>= board_cols || box.right_down_y + pos_delta <= box.left_up_y)
+        while(box.right_down_y + pos_delta>= board_rows || box.right_down_y + pos_delta <= box.left_up_y)
         {
             pos_delta = getPositionDelta(scale);
             //std::cout<<"pos_delta = "<<pos_delta<<std::endl;
@@ -118,9 +142,9 @@ struct Box
         return box;
     }
 
-    void print()
+    void print() const
     {
-        std::cout<<" rgb = ["<<rgb.r<<","<<rgb.g<<","<<rgb.b<<"]"<<std::endl;
+        rgb.print();
         std::cout<<" left_up = ["<<left_up_x<<","<<left_up_y<<"]"<<std::endl;
         std::cout<<" right_down = ["<<right_down_x<<","<<right_down_y<<"]"<<std::endl;
     }
@@ -158,14 +182,68 @@ struct Board
         }	
         myfile.close();
     }
+
+    std::vector<std::string> strsplit(std::string s, const std::string& delimiter)
+    {
+        std::vector<std::string> out;
+        size_t pos = 0;
+        std::string token;
+        while ((pos = s.find(delimiter)) != std::string::npos) {
+            token = s.substr(0, pos);
+            //std::cout << token << std::endl;
+            out.push_back(token);
+            s.erase(0, pos + delimiter.length());
+        }
+        //std::cout << s << std::endl;
+        out.push_back(s);
+
+        return out;
+    }
+
+    void loadBoard(const std::string& file_name)
+    {
+        data.clear();
+
+        std::string line;
+        std::ifstream myfile (file_name);
+        if (myfile.is_open())
+        {
+            //get first line to get row and col nums.
+            getline (myfile,line);
+            std::vector<std::string> infos = strsplit(line, ",");
+
+            board_rows = std::stoi(infos[0]);
+            board_cols = std::stoi(infos[1]);
+
+            std::cout<<"board_rows = "<<board_rows<<std::endl;
+            std::cout<<"board_cols = "<<board_cols<<std::endl;
+
+            for(int i = 0 ; i < board_rows ; i++)
+            {
+                std::vector<RGB> row;
+                for(int j = 0 ; j < board_cols ; j++)
+                {
+                    getline (myfile,line);
+                    std::vector<std::string> tkns = strsplit(line, ",");
+                    row.push_back(RGB(std::stod(tkns[2])/255.0, std::stod(tkns[3])/255.0, std::stod(tkns[4])/255.0));
+                }
+                data.push_back(row);
+            }
+            myfile.close();
+
+        }
+    }
 };
 
 void drawBoxOnBoard(const Box& box, Board& board)
 {
+    //std::cout<<"drawBoxOnBoard "<<std::endl;
+    //box.print();
     for(int i = box.left_up_y ; i<= box.right_down_y ; i++)
     {
         for(int j = box.left_up_x ; j<= box.right_down_x ; j++)
         {
+            //if(i<0 || i >= board_cols || j<0 || j>=board_rows)
             if(i<0 || i >= board_rows || j<0 || j>=board_cols)
             {
                 std::cout<<"i = "<<i<<" j = "<<j<<std::endl;
@@ -178,7 +256,7 @@ void drawBoxOnBoard(const Box& box, Board& board)
     }
 }
 
-Board getTargetBoard(int rows, int cols)
+Board getTestBoard(int rows, int cols)
 {
     Board board(rows, cols);
 
@@ -221,7 +299,7 @@ Board getTargetBoard(int rows, int cols)
 
 struct Entity
 {
-    int num_box = 4;
+    int num_box = 20;
     std::vector<Box> box_vec;
     Entity()
     {
@@ -274,6 +352,12 @@ struct Entity
         //std::cout<<"getBoard 2"<<std::endl; 
         //std::cout<<"board size 2 = "<<board.data[0].size()<<std::endl;
 
+        if(board.data.size() ==0 || board.data[0].size() == 0)
+    {
+std::cout<<"Error"<<std::endl;
+std::cin.get();
+    }
+
         return board;
     }
 
@@ -285,6 +369,11 @@ struct Entity
 
 double getError(const Board& b1, const Board& b2)
 {
+    //std::cout<<"getError start"<<std::endl;
+    //std::cout<<"b1.data.size() = "<<b1.data.size()<<std::endl;
+    //std::cout<<"b1.data[0].size() = "<<b1.data[0].size()<<std::endl;
+    //std::cout<<"b2.data.size() = "<<b2.data.size()<<std::endl;
+    //std::cout<<"b2.data[0].size() = "<<b2.data[0].size()<<std::endl;
     double error = 0;
     for(int i = 0 ; i < b1.data.size() ; i++)
     {
@@ -293,6 +382,7 @@ double getError(const Board& b1, const Board& b2)
             error += std::fabs(b1.data[i][j] - b2.data[i][j]);
         }
     }
+    //std::cout<<"getError end"<<std::endl;
 
     return error;
 }
@@ -310,7 +400,9 @@ int main(int ac, char** av)
     srand( (unsigned)time( NULL ) );
 
     std::cout<<"hello world"<<std::endl;
-    Board board_target = getTargetBoard(board_rows, board_cols);
+    //Board board_target = getTestBoard(board_rows, board_cols);
+    Board board_target(1,1);
+    board_target.loadBoard("lion2.dat");
 
     board_target.saveBoard("example.bd");
 
@@ -321,12 +413,14 @@ int main(int ac, char** av)
     std::vector<Box> box_vec;
     std::vector<Entity> entity_vec;
 
+        //std::cout<<"1"<<std::endl;
     // add inital survivals
     for(int i = 0 ; i < num_survival ; i++)
     {
         entity_vec.push_back(Entity());
     }
 
+        //std::cout<<"11"<<std::endl;
     for(int iter = 0 ; iter < 10000 ; iter++)
     {
         std::cout<<"============="<<std::endl;
@@ -342,7 +436,7 @@ int main(int ac, char** av)
                 Entity child = entity_vec[i].mutate(1);
                 child_vec.push_back(child);
             }
-            
+
             // big mutation
             for(int j = 0 ; j < num_children_each_survival ; j++)
             {
@@ -351,15 +445,23 @@ int main(int ac, char** av)
             }
         }
 
+        //std::cout<<"111"<<std::endl;
         // each child produce result
         std::vector<std::pair<double, Entity>> score_entity_vec;
+        //std::cout<<"child_vec.size() = "<<child_vec.size()<<std::endl;
         for(int i = 0 ; i < child_vec.size() ; i++)
         {
+            //std::cout<<" i = "<<i<<std::endl;
+            //Board temp_b = child_vec[i].getBoard();
             double error = getError(board_target, child_vec[i].getBoard());
+            //double error = 9;
+            //std::cout<<" i2 = "<<i<<std::endl;
             score_entity_vec.push_back(std::make_pair(error, child_vec[i]));
+            //std::cout<<" i3 = "<<i<<std::endl;
             //std::cout<<"error = "<<error<<std::endl;
         }
 
+        //std::cout<<"1111"<<std::endl;
         // keep the best ones and kill the rest.
         std::sort(score_entity_vec.begin(), score_entity_vec.end(), sortPair);
         entity_vec.clear();
@@ -371,7 +473,7 @@ int main(int ac, char** av)
             Entity entity = score_entity_vec[i].second;
             entity_vec.push_back(entity);
 
-            if(iter%100==0)
+            if(iter%1==0)
             {
                 std::string file_name = "board_"+std::to_string(iter)+"_"+std::to_string(i)+".bd";
                 entity.saveBoard(file_name);
@@ -379,6 +481,8 @@ int main(int ac, char** av)
 
         }
         std::cout<<"]"<<std::endl;
+
+        //std::cout<<"1111"<<std::endl;
 
     }
 
